@@ -6,13 +6,18 @@ Projeto da disciplina de Programação Orientada a Objetos (PEX0130) da UFERSA. 
 
 ## Como abrir
 
-No Windows, dê dois cliques em **Abrir Vertice.cmd**. Também dá para abrir pelo terminal, a partir da pasta do projeto:
+Tenha o Java 8 ou superior instalado.
 
-```powershell
-java -jar .\Vertice.jar
+- **Windows** — dê dois cliques em `Abrir Vertice.cmd`.
+- **Linux** — abra o terminal na pasta do projeto e execute `sh "./Abrir Vertice.sh"`.
+
+Você também pode abrir o aplicativo pelo terminal nos dois sistemas com o mesmo comando.
+
+```text
+java -jar Vertice.jar
 ```
 
-O aplicativo pede Java 8 ou superior. Por padrão, ele abre com cadastros fictícios, um aluguel ativo com saldo e uma reserva confirmada. Para abrir a locadora sem exemplos, passe `--vazio` depois do nome do JAR.
+Por padrão, o aplicativo abre com cadastros fictícios, um aluguel ativo com saldo e uma reserva confirmada. Para abrir a locadora sem exemplos, use `java -jar Vertice.jar --vazio`.
 
 Os dados ficam em memória e são descartados ao fechar o aplicativo. O registro de pagamento é uma simulação local, sem conexão com banco ou operadora.
 
@@ -35,7 +40,7 @@ A cobrança inclui a primeira e a última data do período contratado. Uma devol
 
 Os estados usam `enum` para evitar valores inválidos. Os valores em reais usam `BigDecimal` para representar centavos com precisão. O total e o saldo do aluguel são calculados a partir das datas, da diária e dos pagamentos confirmados.
 
-Para recompilar com um JDK, execute:
+No Windows, abra o PowerShell na pasta do projeto e rode este comando para recompilar com um JDK.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\compilar.ps1
