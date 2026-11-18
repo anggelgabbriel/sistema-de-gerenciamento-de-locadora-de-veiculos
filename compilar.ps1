@@ -23,6 +23,11 @@ $javac = Find-JavaCompiler
 $jar = Join-Path (Split-Path $javac) 'jar.exe'
 $saida = Join-Path $PSScriptRoot 'build\classes'
 $destino = Join-Path $PSScriptRoot 'Vertice.jar'
+$manifesto = Join-Path $PSScriptRoot 'build\MANIFEST.MF'
+$driver = 'lib/sqlite-jdbc-3.47.1.0.jar'
+if (!(Test-Path -LiteralPath (Join-Path $PSScriptRoot $driver))) {
+    throw "Driver SQLite nao encontrado: $driver."
+}
 $fontes = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'src') -Recurse -Filter '*.java' |
     ForEach-Object { $_.FullName })
 New-Item -ItemType Directory -Force -Path $saida | Out-Null
@@ -34,6 +39,8 @@ if ($versao -match 'javac 1\.8') {
     & $javac --release 8 -encoding UTF-8 -d $saida @fontes
 }
 if ($LASTEXITCODE -ne 0) { throw 'A compilacao falhou.' }
-& $jar cfe $destino locadora.Main -C $saida locadora
+[IO.File]::WriteAllText($manifesto, "Manifest-Version: 1.0`nMain-Class: locadora.Main`nClass-Path: $driver`n`n",
+    [Text.Encoding]::ASCII)
+& $jar cfm $destino $manifesto -C $saida locadora
 if ($LASTEXITCODE -ne 0) { throw 'Nao foi possivel gerar o JAR.' }
 Write-Host "JAR gerado: $destino"

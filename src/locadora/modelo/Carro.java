@@ -8,9 +8,10 @@ import static locadora.modelo.Validacao.*;
 public final class Carro {
     public enum Status { DISPONIVEL, ALUGADO, MANUTENCAO }
 
-    private final int idCarro, ano;
-    private final String chassi, placa, modelo, marca, cor;
-    private final BigDecimal valorDiario;
+    private final int idCarro;
+    private int ano;
+    private String chassi, placa, modelo, marca, cor;
+    private BigDecimal valorDiario;
     private Status status = Status.DISPONIVEL;
 
     public Carro(int id, String chassi, String placa, String marca, String modelo,
@@ -30,6 +31,17 @@ public final class Carro {
 
     public boolean verificarDisponibilidade() { return status == Status.DISPONIVEL; }
     void alterarStatus(Status novo) { status = java.util.Objects.requireNonNull(novo); }
+
+    void atualizarCadastro(Carro dados) {
+        chassi = dados.chassi;
+        placa = dados.placa;
+        modelo = dados.modelo;
+        marca = dados.marca;
+        cor = dados.cor;
+        ano = dados.ano;
+        valorDiario = dados.valorDiario;
+    }
+
     public BigDecimal calcularValor(long dias) {
         exigir(dias > 0, "O período deve ter pelo menos um dia.");
         return valorDiario.multiply(BigDecimal.valueOf(dias));

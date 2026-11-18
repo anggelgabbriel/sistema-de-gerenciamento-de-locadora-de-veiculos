@@ -19,17 +19,24 @@ public final class Aluguel {
     private final BigDecimal diaria;
     private final List<Pagamento> pagamentos = new ArrayList<>();
     private LocalDate dataDevolucao;
-    private Status status = Status.ATIVO;
+    private Status status;
 
     Aluguel(int id, Carro carro, Cliente cliente, Funcionario funcionario, LocalDate fim) {
-        dataInicio = LocalDate.now();
-        periodo(dataInicio, fim);
+        this(id, carro, cliente, funcionario, LocalDate.now(), fim, null, carro.getValorDiario(), Status.ATIVO);
+    }
+
+    Aluguel(int id, Carro carro, Cliente cliente, Funcionario funcionario, LocalDate inicio, LocalDate fim,
+            LocalDate devolucao, BigDecimal diaria, Status status) {
+        periodo(inicio, fim);
         idAluguel = id;
         this.carro = carro;
         this.cliente = cliente;
         this.funcionario = funcionario;
+        dataInicio = inicio;
         dataFim = fim;
-        diaria = carro.getValorDiario();
+        dataDevolucao = devolucao;
+        this.diaria = dinheiro(diaria);
+        this.status = status;
     }
 
     public BigDecimal calcularValorTotal() {
@@ -38,20 +45,30 @@ public final class Aluguel {
     }
 
     public void registrarDevolucao(LocalDate data) {
-        exigir(status == Status.ATIVO, "Este aluguel já foi devolvido.");
-        periodo(dataInicio, data);
-        dataDevolucao = dataPassadaOuHoje(data, "A devolução");
+        validarDevolucao(data);
+        dataDevolucao = data;
         status = Status.DEVOLVIDO;
         carro.alterarStatus(Carro.Status.DISPONIVEL);
     }
 
     public void finalizarAluguel() {
-        exigir(status == Status.DEVOLVIDO, "Registre a devolução antes de finalizar.");
-        exigir(getSaldo().signum() == 0, "Quite o saldo antes de finalizar o aluguel.");
+        validarFinalizacao();
         status = Status.FINALIZADO;
     }
 
+    void validarDevolucao(LocalDate data) {
+        exigir(status == Status.ATIVO, "Este aluguel já foi devolvido.");
+        periodo(dataInicio, data);
+        dataPassadaOuHoje(data, "A devolução");
+    }
+
+    void validarFinalizacao() {
+        exigir(status == Status.DEVOLVIDO, "Registre a devolução antes de finalizar.");
+        exigir(getSaldo().signum() == 0, "Quite o saldo antes de finalizar o aluguel.");
+    }
+
     void adicionarPagamento(Pagamento pagamento) { pagamentos.add(pagamento); }
+    BigDecimal getDiariaContratada() { return diaria; }
     public BigDecimal getSaldo() {
         return pagamentos.stream().filter(p -> p.getStatus() == Pagamento.Status.CONFIRMADO)
                 .map(Pagamento::getValor).reduce(calcularValorTotal(), BigDecimal::subtract);

@@ -6,6 +6,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import locadora.database.Banco;
 import locadora.modelo.*;
 import static locadora.ui.Formatos.*;
 import static locadora.ui.Tema.*;
@@ -25,19 +26,17 @@ public final class JanelaLocadora extends JFrame {
     }
 
     private final Locadora locadora;
-    private final boolean exemplo;
     private final Operacoes operacoes;
     private final Map<Tela, JButton> atalhos = new EnumMap<>(Tela.class);
     private final JPanel centro = painel(new BorderLayout(0, 18));
     private final JLabel mensagem = texto(" ", 12, Font.PLAIN, PETROLEO);
     private Tela tela = Tela.INICIO;
 
-    public JanelaLocadora(Locadora locadora, boolean exemplo) {
+    public JanelaLocadora(Locadora locadora) {
         super("Vértice • Locadora de veículos");
         this.locadora = locadora;
-        this.exemplo = exemplo;
         operacoes = new Operacoes(getRootPane(), locadora, this::atualizar);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         JPanel raiz = new JPanel(new BorderLayout());
         raiz.setBackground(FUNDO);
         raiz.add(menu(), BorderLayout.WEST);
@@ -85,9 +84,9 @@ public final class JanelaLocadora extends JFrame {
         menu.add(itens, BorderLayout.NORTH);
 
         JPanel rodape = coluna();
-        rodape.add(texto(exemplo ? "●  Modo demonstração" : "●  Sessão local", 12, Font.BOLD, MENTA));
+        rodape.add(texto("●  Banco SQLite", 12, Font.BOLD, MENTA));
         rodape.add(Box.createVerticalStrut(4));
-        rodape.add(texto("Dados desta sessão", 12, Font.PLAIN, cor(0xB9CBD9)));
+        rodape.add(texto("Dados salvos em sistema.db", 12, Font.PLAIN, cor(0xB9CBD9)));
         menu.add(rodape, BorderLayout.SOUTH);
         return menu;
     }
@@ -138,7 +137,8 @@ public final class JanelaLocadora extends JFrame {
                 new String[]{"ID", "Placa", "Marca", "Modelo", "Ano", "Cor", "Diária", "Status"},
                 c -> new Object[]{c.getIdCarro(), c.getPlaca(), c.getMarca(), c.getModelo(),
                         c.getAno(), c.getCor(), c.getValorDiario(), c.getStatus()}, true);
-        return pagina(lista, acao("+ Novo veículo", true, operacoes::novoCarro),
+        return pagina(lista, acao("+ Novo veículo", true, () -> operacoes.carro(null)),
+                acao("Editar veículo", false, () -> operacoes.carro(lista.selecionado())),
                 acao("Alternar manutenção", false, () -> {
                     Carro carro = lista.selecionado();
                     locadora.alternarManutencao(carro);
@@ -189,7 +189,7 @@ public final class JanelaLocadora extends JFrame {
                 acao("Cancelar reserva", false, () -> {
                     Reserva reserva = lista.selecionado();
                     operacoes.confirmar("Cancelar a reserva #" + reserva.getIdReserva() + "?",
-                            reserva::cancelarReserva, "Reserva cancelada.");
+                            () -> locadora.cancelarReserva(reserva), "Reserva cancelada.");
                 }));
     }
 
@@ -203,7 +203,7 @@ public final class JanelaLocadora extends JFrame {
                 acao("Registrar devolução", false, () -> operacoes.devolver(lista.selecionado())),
                 acao("Receber pagamento", false, () -> operacoes.pagar(lista.selecionado())),
                 acao("Finalizar", false, () -> {
-                    lista.selecionado().finalizarAluguel();
+                    locadora.finalizarAluguel(lista.selecionado());
                     atualizar("Aluguel finalizado.");
                 }), acao("Ver responsável", false, () -> {
                     Aluguel aluguel = lista.selecionado();
@@ -221,7 +221,7 @@ public final class JanelaLocadora extends JFrame {
                 acao("Estornar", false, () -> {
                     Pagamento pagamento = lista.selecionado();
                     operacoes.confirmar("Estornar o pagamento de " + moeda(pagamento.getValor()) + "?",
-                            pagamento::estornarPagamento, "Pagamento estornado.");
+                            () -> locadora.estornarPagamento(pagamento), "Pagamento estornado.");
                 }));
     }
 
@@ -240,7 +240,7 @@ public final class JanelaLocadora extends JFrame {
 
     private void executar(Runnable acao) {
         try { acao.run(); }
-        catch (IllegalArgumentException e) {
+        catch (IllegalArgumentException | Banco.Erro e) {
             JOptionPane.showMessageDialog(this, e.getMessage(), "Confira a operação", JOptionPane.WARNING_MESSAGE);
         }
     }

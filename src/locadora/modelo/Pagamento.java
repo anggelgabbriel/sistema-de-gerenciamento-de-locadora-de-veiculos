@@ -10,16 +10,22 @@ public final class Pagamento {
 
     private final int idPagamento;
     private final BigDecimal valor;
-    private final LocalDate dataPagamento = LocalDate.now();
+    private final LocalDate dataPagamento;
     private final Forma formaPagamento;
     private final Aluguel aluguel;
-    private Status status = Status.PENDENTE;
+    private Status status;
 
     Pagamento(int id, Aluguel aluguel, BigDecimal valor, Forma forma) {
+        this(id, aluguel, valor, LocalDate.now(), forma, Status.PENDENTE);
+    }
+
+    Pagamento(int id, Aluguel aluguel, BigDecimal valor, LocalDate data, Forma forma, Status status) {
         idPagamento = id;
         this.aluguel = aluguel;
         this.valor = dinheiro(valor);
+        dataPagamento = data;
         formaPagamento = java.util.Objects.requireNonNull(forma);
+        this.status = status;
     }
 
     public boolean processarPagamento() {
@@ -32,9 +38,13 @@ public final class Pagamento {
     private void confirmarPagamento() { status = Status.CONFIRMADO; }
 
     public void estornarPagamento() {
+        validarEstorno();
+        status = Status.ESTORNADO;
+    }
+
+    void validarEstorno() {
         exigir(status == Status.CONFIRMADO && aluguel.getStatus() != Aluguel.Status.FINALIZADO,
                 "Só é possível estornar um pagamento confirmado antes de finalizar o aluguel.");
-        status = Status.ESTORNADO;
     }
 
     public int getIdPagamento() { return idPagamento; }

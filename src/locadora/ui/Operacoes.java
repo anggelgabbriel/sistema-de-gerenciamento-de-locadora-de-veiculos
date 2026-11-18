@@ -24,19 +24,24 @@ final class Operacoes {
         this.atualizado = atualizado;
     }
 
-    void novoCarro() {
-        Formulario form = new Formulario(janela, "Cadastrar veículo");
-        JTextField marca = form.campo("Marca");
-        JTextField modelo = form.campo("Modelo");
-        JTextField placa = form.campo("Placa");
-        JTextField chassi = form.campo("Chassi");
-        JTextField ano = form.campo("Ano");
-        JTextField cor = form.campo("Cor");
-        JTextField diaria = form.campo("Diária em R$");
-        form.abrir("Cadastrar", () -> {
-            locadora.cadastrarCarro(chassi.getText(), placa.getText(), marca.getText(), modelo.getText(),
-                    lerAno(ano), cor.getText(), Formulario.lerMoeda(diaria));
-            atualizado.accept("Veículo cadastrado.");
+    void carro(Carro atual) {
+        Formulario form = new Formulario(janela, atual == null ? "Cadastrar veículo" : "Editar veículo");
+        JTextField marca = form.campo("Marca", atual == null ? "" : atual.getMarca());
+        JTextField modelo = form.campo("Modelo", atual == null ? "" : atual.getModelo());
+        JTextField placa = form.campo("Placa", atual == null ? "" : atual.getPlaca());
+        JTextField chassi = form.campo("Chassi", atual == null ? "" : atual.getChassi());
+        JTextField ano = form.campo("Ano", atual == null ? "" : Integer.toString(atual.getAno()));
+        JTextField cor = form.campo("Cor", atual == null ? "" : atual.getCor());
+        JTextField diaria = form.campo("Diária em R$", atual == null ? "" : decimal(atual.getValorDiario()));
+        form.abrir("Salvar", () -> {
+            if (atual == null) {
+                locadora.cadastrarCarro(chassi.getText(), placa.getText(), marca.getText(), modelo.getText(),
+                        lerAno(ano), cor.getText(), Formulario.lerMoeda(diaria));
+            } else {
+                locadora.editarCarro(atual, chassi.getText(), placa.getText(), marca.getText(), modelo.getText(),
+                        lerAno(ano), cor.getText(), Formulario.lerMoeda(diaria));
+            }
+            atualizado.accept("Cadastro do veículo salvo.");
         });
     }
 
@@ -123,7 +128,7 @@ final class Operacoes {
         Formulario form = new Formulario(janela, "Registrar devolução #" + aluguel.getIdAluguel());
         JTextField data = form.campo("Devolução (dd/mm/aaaa)", data(LocalDate.now()));
         form.abrir("Registrar", () -> {
-            aluguel.registrarDevolucao(Formulario.lerData(data));
+            locadora.registrarDevolucao(aluguel, Formulario.lerData(data));
             atualizado.accept("Devolução registrada. Saldo do aluguel: " + moeda(aluguel.getSaldo()) + ".");
         });
     }

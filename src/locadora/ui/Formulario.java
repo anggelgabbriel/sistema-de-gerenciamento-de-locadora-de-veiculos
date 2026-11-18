@@ -7,6 +7,7 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import locadora.database.Banco;
 import static locadora.ui.Tema.*;
 
 final class Formulario {
@@ -25,6 +26,12 @@ final class Formulario {
 
     JTextField campo(String rotulo, String valor) {
         JTextField campo = new JTextField(valor, 22);
+        adicionar(rotulo, campo);
+        return campo;
+    }
+
+    JPasswordField senha(String rotulo) {
+        JPasswordField campo = new JPasswordField(22);
         adicionar(rotulo, campo);
         return campo;
     }
@@ -59,8 +66,9 @@ final class Formulario {
         campos.add(campo, posicao);
     }
 
-    void abrir(String acao, Runnable salvar) {
-        JDialog dialogo = new JDialog(SwingUtilities.getWindowAncestor(janela), titulo, Dialog.ModalityType.APPLICATION_MODAL);
+    boolean abrir(String acao, Runnable salvar) {
+        Window dona = janela == null ? null : SwingUtilities.getWindowAncestor(janela);
+        JDialog dialogo = new JDialog(dona, titulo, Dialog.ModalityType.APPLICATION_MODAL);
         dialogo.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         JPanel corpo = new JPanel(new BorderLayout(0, 8));
         corpo.setBorder(new EmptyBorder(20, 24, 18, 24));
@@ -76,11 +84,13 @@ final class Formulario {
         JPanel botoes = painel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         botoes.setAlignmentX(Component.LEFT_ALIGNMENT);
         botoes.add(botao("Cancelar", false, dialogo::dispose));
+        boolean[] confirmado = {false};
         JButton confirmar = botao(acao, true, () -> {
             try {
                 salvar.run();
+                confirmado[0] = true;
                 dialogo.dispose();
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException | Banco.Erro e) {
                 erro.setText("<html><body style='width: 315px'>" + e.getMessage() + "</body></html>");
                 dialogo.pack();
             }
@@ -97,6 +107,7 @@ final class Formulario {
         dialogo.setMinimumSize(dialogo.getSize());
         dialogo.setLocationRelativeTo(janela);
         dialogo.setVisible(true);
+        return confirmado[0];
     }
 
     static LocalDate lerData(JTextField campo) {
